@@ -1,191 +1,996 @@
 openapi: 3.1.0
 info:
-  title: Cloud Functions API
+  title: Google Cloud Functions API
   description: Manages lightweight user-provided functions executed in response to events.
-  version: 1.0.0
+  version: v2
 servers:
-  - url: https://cloudfunctions.googleapis.com/v2
+  - url: https://cloudfunctions.googleapis.com/
     description: Google Cloud Functions API
 paths:
-  /{parent}/functions:
+  /v2/{parent}/functions:
     post:
       operationId: createFunction
       summary: Creates a new function.
+      description: |
+        Creates a new function. If a function with the given name already exists in the specified project, the long running operation will return `ALREADY_EXISTS` error.
+      parameters:
+        - name: parent
+          in: path
+          required: true
+          description: The project and location in which the function should be created, specified in the format `projects/*/locations/*`.
+          schema:
+            type: string
+        - name: functionId
+          in: query
+          description: |
+            The ID to use for the function, which will become the final component of the function's resource name. This value should be 4-63 characters, and valid characters are /a-z-/.
+          schema:
+            type: string
       requestBody:
-        required: true
         content:
           application/json:
             schema:
               $ref: '#/components/schemas/Function'
-      parameters:
-        - name: parent
-          in: path
-          required: true
-          schema:
-            type: string
-            example: projects/{project_id}/locations/{location_id}
       responses:
         '200':
-          description: Function created successfully.
+          description: Successful response
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/Operation'
-    get:
-      operationId: listFunctions
-      summary: Lists all functions in the specified project.
-      parameters:
-        - name: parent
-          in: path
-          required: true
-          schema:
-            type: string
-            example: projects/{project_id}/locations/{location_id}
-      responses:
-        '200':
-          description: List of functions retrieved successfully.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ListFunctionsResponse'
-  /{name}:
-    delete:
-      operationId: deleteFunction
-      summary: Deletes a function.
-      parameters:
-        - name: name
-          in: path
-          required: true
-          schema:
-            type: string
-            example: projects/{project_id}/locations/{location_id}/functions/{function_id}
-      responses:
-        '200':
-          description: Function deleted successfully.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Operation'
-    get:
-      operationId: getFunction
-      summary: Gets information about a function.
-      parameters:
-        - name: name
-          in: path
-          required: true
-          schema:
-            type: string
-            example: projects/{project_id}/locations/{location_id}/functions/{function_id}
-      responses:
-        '200':
-          description: Function details retrieved successfully.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Function'
+  /v2/{name}:
     patch:
       operationId: updateFunction
-      summary: Updates a function.
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/Function'
-      parameters:
-        - name: function.name
-          in: path
-          required: true
-          schema:
-            type: string
-            example: projects/{project_id}/locations/{location_id}/functions/{function_id}
-      responses:
-        '200':
-          description: Function updated successfully.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Operation'
-  /{name}:generateDownloadUrl:
-    post:
-      operationId: generateDownloadUrl
-      summary: Generates a download URL for the function source code.
+      summary: Updates an existing function.
+      description: |
+        Updates existing function.
       parameters:
         - name: name
           in: path
           required: true
+          description: A user-defined name of the function. Function names must be unique globally and match pattern `projects/*/locations/*/functions/*`.
           schema:
             type: string
-            example: projects/{project_id}/locations/{location_id}/functions/{function_id}
+        - name: updateMask
+          in: query
+          description: |
+            The list of fields to be updated. If no field mask is provided, all provided fields in the request will be updated.
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Function'
       responses:
         '200':
-          description: Download URL generated successfully.
+          description: Successful response
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/GenerateDownloadUrlResponse'
-  /{parent}/functions:generateUploadUrl:
-    post:
-      operationId: generateUploadUrl
-      summary: Generates an upload URL for the function source code.
+                $ref: '#/components/schemas/Operation'
+  /v2/{name}/operations:
+    get:
+      operationId: listOperations
+      summary: Lists operations.
+      description: |
+        Lists operations that match the specified filter in the request. If the server doesn't support this method, it returns `UNIMPLEMENTED`.
       parameters:
-        - name: parent
+        - name: name
           in: path
           required: true
+          description: The name of the operation's parent resource.
           schema:
             type: string
-            example: projects/{project_id}/locations/{location_id}
+        - name: filter
+          in: query
+          description: The standard list filter.
+          schema:
+            type: string
+        - name: pageSize
+          in: query
+          description: The standard list page size.
+          schema:
+            type: integer
+            format: int32
+        - name: pageToken
+          in: query
+          description: The standard list page token.
+          schema:
+            type: string
       responses:
         '200':
-          description: Upload URL generated successfully.
+          description: Successful response
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/GenerateUploadUrlResponse'
-
+                $ref: '#/components/schemas/ListOperationsResponse'
 components:
   schemas:
     Function:
       type: object
+      description: |
+        Describes a Cloud Function that contains user computation executed in response to events.
       properties:
         name:
           type: string
+          description: The name of the function.
         description:
           type: string
-        buildConfig:
-          $ref: '#/components/schemas/BuildConfig'
-        serviceConfig:
-          $ref: '#/components/schemas/ServiceConfig'
+          description: User-provided description of the function.
+        sourceArchiveUrl:
+          type: string
+          description: The Google Cloud Storage URL where the source code archive is located.
+        sourceRepository:
+          $ref: '#/components/schemas/SourceRepository'
+        httpsTrigger:
+          $ref: '#/components/schemas/HttpsTrigger'
         eventTrigger:
           $ref: '#/components/schemas/EventTrigger'
-        state:
+    Operation:
+      type: object
+      description: |
+        This resource represents a long-running operation that is the result of a network API call.
+      properties:
+        name:
           type: string
-        updateTime:
+          description: The name of the operation resource.
+        metadata:
+          type: object
+          additionalProperties: true
+        done:
+          type: boolean
+          description: Indicates if the operation is completed.
+        error:
+          $ref: '#/components/schemas/Status'
+        response:
+          type: object
+          additionalProperties: true
+    Status:
+      type: object
+      description: |
+        The `Status` type defines a logical error model that is suitable for different programming environments, including REST APIs and RPC APIs.
+      properties:
+        code:
+          type: integer
+          format: int32
+          description: The status code.
+        message:
           type: string
-          format: date-time
+          description: A developer-facing error message, which should be in English.
+        details:
+          type: array
+          items:
+            type: object
+            additionalProperties: true
+    ListOperationsResponse:
+      type: object
+      properties:
+        operations:
+          type: array
+          items:
+            $ref: '#/components/schemas/Operation'
+        nextPageToken:
+          type: string
+    SourceRepository:
+      type: object
+      description: |
+        Describes the location of the function source in a remote repository.
+      properties:
+        url:
+          type: string
+          description: The URL pointing to the hosted repository where the function is defined.
+        branch:
+          type: string
+          description: The branch where the function is defined.
+        tag:
+          type: string
+          description: The tag where the function is defined.
+        commit:
+          type: string
+          description: The specific commit hash where the function is defined.
+    HttpsTrigger:
+      type: object
+      description: |
+        Describes HTTP triggers for the function.
+      properties:
+        url:
+          type: string
+          description: The deployed url for the function.
+    EventTrigger:
+      type: object
+      description: |
+        Describes EventTrigger, used to request events to be sent from another service.
+      properties:
+        eventType:
+          type: string
+          description: The type of event to observe.
+        resource:
+          type: string
+          description: The resource(s) from which to observe events.
+        service:
+          type: string
+          description: The hostname of the service that should be observed.
+  parameters:
+    access_token:
+      name: access_token
+      in: query
+      description: OAuth access token.
+      required: false
+      schema:
+        type: string
+    alt:
+      name: alt
+      in: query
+      description: Data format for response.
+      required: false
+      schema:
+        type: string
+        default: json
+        enum: [json, media, proto]
+    callback:
+      name: callback
+      in: query
+      description: JSONP
+      required: false
+      schema:
+        type: string
+    fields:
+      name: fields
+      in: query
+      description: Selector specifying which fields to include in a partial response.
+      required: false
+      schema:
+        type: string
+    key:
+      name: key
+      in: query
+      description: |
+        API key. Your API key identifies your project and provides you with API access, quota, and reports. Required unless you provide an OAuth 2.0 token.
+      required: false
+      schema:
+        type: string
+    oauth_token:
+      name: oauth_token
+      in: query
+      description: OAuth 2.0 token for the current user.
+      required: false
+      schema:
+        type: string
+    prettyPrint:
+      name: prettyPrint
+      in: query
+      description: Returns response with indentations and line breaks.
+      required: false
+      schema:
+        type: boolean
+        default: true
+    quotaUser:
+      name: quotaUser
+      in: query
+      description: |
+        Available to use for quota purposes for server-side applications. Can be any arbitrary string assigned to a user, but should not exceed 40 characters.
+      required: false
+      schema:
+        type: string
+    uploadType:
+      name: uploadType
+      in: query
+      description: Legacy upload protocol for media (e.g., "media", "multipart").
+      required: false
+      schema:
+        type: string
+    upload_protocol:
+      name: upload_protocol
+      in: query
+      description: Upload protocol for media (e.g., "raw", "multipart").
+      required: false
+      schema:
+        type: string
+    $.xgafv:
+      name: $.xgafv
+      in: query
+      description: V1 error format.
+      required: false
+      schema:
+        type: string
+        enum: ["1", "2"]
+  securitySchemes:
+    oauth2:
+      type: oauth2
+      flows:
+        authorizationCode:
+          authorizationUrl: https://accounts.google.com/o/oauth2/auth
+          tokenUrl: https://accounts.google.com/o/oauth2/token
+          scopes:
+            https://www.googleapis.com/auth/cloud-platform: See, edit, configure, and delete your Google Cloud data and see the email address for your Google Account.
+tags:
+  - name: functions
+    description: Operations about Cloud Functions
+paths:
+  /v2/{name}:
+    delete:
+      operationId: deleteFunction
+      summary: Deletes a function.
+      description: Deletes a function with the given name from the specified project. 
+      parameters:
+        - name: name
+          in: path
+          required: true
+          description: The name of the function which should be deleted.
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Operation'
+  /v2/{name}:
+    get:
+      operationId: getFunction
+      summary: Gets the details of a function.
+      description: Gets the details of a function with the given name from the specified project.
+      parameters:
+        - name: name
+          in: path
+          required: true
+          description: The name of the function.
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Function'
+  /v2/{name}:call:
+    post:
+      operationId: callFunction
+      summary: Invokes a deployed function.
+      description: Invokes a deployed function with the given name.
+      parameters:
+        - name: name
+          in: path
+          required: true
+          description: The name of the function to be called.
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CallFunctionRequest'
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CallFunctionResponse'
+  /v2/{parent}/functions:
+    get:
+      operationId: listFunctions
+      summary: Lists functions.
+      description: Lists functions in the specified project.
+      parameters:
+        - name: parent
+          in: path
+          required: true
+          description: The project and location from which the function should be listed, specified in the format `projects/*/locations/*`.
+          schema:
+            type: string
+        - name: pageSize
+          in: query
+          description: The standard list page size.
+          schema:
+            type: integer
+            format: int32
+        - name: pageToken
+          in: query
+          description: The standard list page token.
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ListFunctionsResponse'
+components:
+  schemas:
+    CallFunctionRequest:
+      type: object
+      description: The request for calling a function.
+      properties:
+        data:
+          type: string
+          description: The input data to be passed to the function.
+    CallFunctionResponse:
+      type: object
+      description: The response from calling a function.
+      properties:
+        executionId:
+          type: string
+          description: Execution id of the function invocation.
+        result:
+          type: string
+          description: Result of the function execution.
+        error:
+          type: string
+          description: Error returned during function execution.
+    ListFunctionsResponse:
+      type: object
+      description: Response for the `ListFunctions` method.
+      properties:
+        functions:
+          type: array
+          items:
+            $ref: '#/components/schemas/Function'
+        nextPageToken:
+          type: string
+          description: A token to retrieve the next page of results.
+        unreachable:
+          type: array
+          items:
+            type: string
+          description: Locations that could not be reached.
+security:
+  - oauth2: []
+  /v2/{resource}:setIamPolicy:
+    post:
+      operationId: setIamPolicy
+      summary: Sets the IAM policy.
+      description: Sets the IAM policy for the specified resource.
+      parameters:
+        - name: resource
+          in: path
+          required: true
+          description: The resource for which the policy is being specified.
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SetIamPolicyRequest'
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Policy'
+  /v2/{resource}:getIamPolicy:
+    get:
+      operationId: getIamPolicy
+      summary: Gets the IAM policy.
+      description: Gets the IAM policy for the specified resource.
+      parameters:
+        - name: resource
+          in: path
+          required: true
+          description: The resource for which the policy is being requested.
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Policy'
+  /v2/{resource}:testIamPermissions:
+    post:
+      operationId: testIamPermissions
+      summary: Tests the IAM permissions.
+      description: Tests the specified permissions against the IAM access control policy for the specified resource.
+      parameters:
+        - name: resource
+          in: path
+          required: true
+          description: The resource for which the policy detail is being requested.
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TestIamPermissionsRequest'
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TestIamPermissionsResponse'
+components:
+  schemas:
+    SetIamPolicyRequest:
+      type: object
+      description: Request message for `SetIamPolicy` method.
+      properties:
+        policy:
+          $ref: '#/components/schemas/Policy'
+        updateMask:
+          type: string
+          description: A FieldMask specifying which fields of the policy to modify.
+    Policy:
+      type: object
+      description: An Identity and Access Management (IAM) policy.
+      properties:
+        version:
+          type: integer
+          description: Specifies the format of the policy.
+        bindings:
+          type: array
+          items:
+            $ref: '#/components/schemas/Binding'
+        auditConfigs:
+          type: array
+          items:
+            $ref: '#/components/schemas/AuditConfig'
+        etag:
+          type: string
+          format: byte
+          description: `etag` is used for optimistic concurrency control.
+    Binding:
+      type: object
+      description: Associates `members`, or principals, with a `role`.
+      properties:
+        role:
+          type: string
+          description: Role that is assigned to the list of `members`, or principals.
+        members:
+          type: array
+          items:
+            type: string
+          description: Specifies the principals requesting access for a Google Cloud resource.
+        condition:
+          $ref: '#/components/schemas/Expr'
+    Expr:
+      type: object
+      description: Represents a textual expression in the Common Expression Language (CEL) syntax.
+      properties:
+        expression:
+          type: string
+          description: Textual representation of an expression in Common Expression Language syntax.
+        title:
+          type: string
+          description: Title for the expression.
+        description:
+          type: string
+          description: Description of the expression.
+        location:
+          type: string
+          description: String indicating the location of the expression for error reporting.
+    AuditConfig:
+      type: object
+      description: Specifies the audit configuration for a service.
+      properties:
+        service:
+          type: string
+          description: Specifies a service that will be enabled for audit logging.
+        auditLogConfigs:
+          type: array
+          items:
+            $ref: '#/components/schemas/AuditLogConfig'
+    AuditLogConfig:
+      type: object
+      description: Provides the configuration for logging a type of permissions.
+      properties:
+        logType:
+          type: string
+          description: The log type that this config enables.
+          enum: [ADMIN_READ, DATA_WRITE, DATA_READ]
+        exemptedMembers:
+          type: array
+          items:
+            type: string
+          description: Specifies the identities that do not cause logging for this type of permission.
+    TestIamPermissionsRequest:
+      type: object
+      description: Request message for `TestIamPermissions` method.
+      properties:
+        permissions:
+          type: array
+          items:
+            type: string
+          description: The set of permissions to check for the `resource`.
+    TestIamPermissionsResponse:
+      type: object
+      description: Response message for `TestIamPermissions` method.
+      properties:
+        permissions:
+          type: array
+          items:
+            type: string
+          description: A subset of `TestPermissionsRequest.permissions` that the caller is allowed.
+  /v2/{name}:generateUploadUrl:
+    post:
+      operationId: generateUploadUrl
+      summary: Generates an upload URL.
+      description: Generates a signed URL for uploading a function source code.
+      parameters:
+        - name: name
+          in: path
+          required: true
+          description: The project and location in which the function should be created, specified in the format `projects/*/locations/*`.
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GenerateUploadUrlRequest'
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GenerateUploadUrlResponse'
+  /v2/{name}:generateDownloadUrl:
+    post:
+      operationId: generateDownloadUrl
+      summary: Generates a download URL.
+      description: Generates a signed URL for downloading deployed function source code.
+      parameters:
+        - name: name
+          in: path
+          required: true
+          description: The name of function for which source code should be downloaded.
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GenerateDownloadUrlRequest'
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GenerateDownloadUrlResponse'
+components:
+  schemas:
+    GenerateUploadUrlRequest:
+      type: object
+      description: Request for generating a signed URL for uploading a function source code.
+      properties:
+        kmsKeyName:
+          type: string
+          description: |
+            Resource name of a KMS crypto key (managed by the user) used to encrypt/decrypt function source code objects in intermediate Cloud Storage buckets.
+        environment:
+          type: string
+          description: The function environment the generated upload URL will be used for.
+          enum: [ENVIRONMENT_UNSPECIFIED, GEN_1, GEN_2]
+    GenerateUploadUrlResponse:
+      type: object
+      description: Response for generating a signed URL for uploading a function source code.
+      properties:
+        uploadUrl:
+          type: string
+          description: The generated Google Cloud Storage signed URL that should be used for function source code upload.
+        storageSource:
+          $ref: '#/components/schemas/StorageSource'
+    GenerateDownloadUrlRequest:
+      type: object
+      description: Request for generating a signed URL for downloading deployed function source code.
+    GenerateDownloadUrlResponse:
+      type: object
+      description: Response for generating a signed URL for downloading deployed function source code.
+      properties:
+        downloadUrl:
+          type: string
+          description: The generated Google Cloud Storage signed URL that should be used for function source code download.
+    ListRuntimesResponse:
+      type: object
+      description: Response for the `ListRuntimes` method.
+      properties:
+        runtimes:
+          type: array
+          items:
+            $ref: '#/components/schemas/Runtime'
+    Runtime:
+      type: object
+      description: Describes a runtime and any special information (e.g., deprecation status) related to it.
+      properties:
+        name:
+          type: string
+          description: The name of the runtime, e.g., 'go113', 'nodejs12', etc.
+        displayName:
+          type: string
+          description: The user-facing name, e.g., 'Go 1.13', 'Node.js 12', etc.
+        stage:
+          type: string
+          description: The stage of life this runtime is in, e.g., BETA, GA, etc.
+          enum: [RUNTIME_STAGE_UNSPECIFIED, DEVELOPMENT, ALPHA, BETA, GA, DEPRECATED, DECOMMISSIONED]
+        warnings:
+          type: array
+          items:
+            type: string
+          description: Warning messages, e.g., a deprecation warning.
+        environment:
+          type: string
+          description: The environment for the runtime.
+          enum: [ENVIRONMENT_UNSPECIFIED, GEN_1, GEN_2]
+        deprecationDate:
+          $ref: '#/components/schemas/Date'
+        decommissionDate:
+          $ref: '#/components/schemas/Date'
+    Date:
+      type: object
+      description: Represents a whole or partial calendar date, such as a birthday.
+      properties:
+        year:
+          type: integer
+          format: int32
+          description: Year of the date.
+        month:
+          type: integer
+          format: int32
+          description: Month of a year.
+        day:
+          type: integer
+          format: int32
+          description: Day of a month.
+    ListLocationsResponse:
+      type: object
+      description: The response message for Locations.ListLocations.
+      properties:
+        locations:
+          type: array
+          items:
+            $ref: '#/components/schemas/Location'
+        nextPageToken:
+          type: string
+          description: The standard List next-page token.
+    Location:
+      type: object
+      description: A resource that represents a Google Cloud location.
+      properties:
+        name:
+          type: string
+          description: Resource name for the location.
+        locationId:
+          type: string
+          description: The canonical id for this location.
+        displayName:
+          type: string
+          description: The friendly name for this location.
         labels:
           type: object
           additionalProperties:
             type: string
-        stateMessages:
-          type: array
-          items:
-            $ref: '#/components/schemas/GoogleCloudFunctionsV2StateMessage'
-        environment:
+          description: Cross-service attributes for the location.
+        metadata:
+          type: object
+          additionalProperties:
+            type: object
+            additionalProperties:
+              type: any
+            description: Service-specific metadata.
+    OperationMetadataV1:
+      type: object
+      description: Metadata describing an Operation.
+      properties:
+        target:
           type: string
-        upgradeInfo:
-          $ref: '#/components/schemas/UpgradeInfo'
-        url:
+          description: Target of the operation.
+        type:
           type: string
-        kmsKeyName:
+          description: Type of operation.
+          enum: [OPERATION_UNSPECIFIED, CREATE_FUNCTION, UPDATE_FUNCTION, DELETE_FUNCTION]
+        request:
+          type: object
+          additionalProperties:
+            type: any
+        versionId:
           type: string
-        satisfiesPzs:
-          type: boolean
+          format: int64
+          description: Version id of the function created or updated by an API call.
+        updateTime:
+          type: string
+          format: date-time
+          description: The last update timestamp of the operation.
+        buildId:
+          type: string
+          description: The Cloud Build ID of the function created or updated by an API call.
+        sourceToken:
+          type: string
+          description: An identifier for Firebase function sources.
+        buildName:
+          type: string
+          description: The Cloud Build Name of the function deployment.
+    GoogleCloudFunctionsV2alphaOperationMetadata:
+      type: object
+      description: Represents the metadata of the long-running operation.
+      properties:
         createTime:
           type: string
           format: date-time
+          description: The time the operation was created.
+        endTime:
+          type: string
+          format: date-time
+          description: The time the operation finished running.
+        target:
+          type: string
+          description: Server-defined resource path for the target of the operation.
+        verb:
+          type: string
+          description: Name of the verb executed by the operation.
+        statusDetail:
+          type: string
+          description: Human-readable status of the operation.
+        cancelRequested:
+          type: boolean
+          description: Identifies whether the user has requested cancellation of the operation.
+        apiVersion:
+          type: string
+          description: API version used to start the operation.
+        requestResource:
+          type: object
+          additionalProperties:
+            type: any
+        stages:
+          type: array
+          items:
+            $ref: '#/components/schemas/GoogleCloudFunctionsV2alphaStage'
+        sourceToken:
+          type: string
+          description: An identifier for Firebase function sources.
+        operationType:
+          type: string
+          description: The operation type.
+          enum: [OPERATIONTYPE_UNSPECIFIED, CREATE_FUNCTION, UPDATE_FUNCTION, DELETE_FUNCTION, REDIRECT_FUNCTION_UPGRADE_TRAFFIC, ROLLBACK_FUNCTION_UPGRADE_TRAFFIC, SETUP_FUNCTION_UPGRADE_CONFIG, ABORT_FUNCTION_UPGRADE, COMMIT_FUNCTION_UPGRADE]
+    GoogleCloudFunctionsV2alphaStage:
+      type: object
+      description: Each Stage of the deployment process.
+      properties:
+        name:
+          type: string
+          description: Name of the Stage.
+          enum: [NAME_UNSPECIFIED, ARTIFACT_REGISTRY, BUILD, SERVICE, TRIGGER, SERVICE_ROLLBACK, TRIGGER_ROLLBACK]
+        message:
+          type: string
+          description: Message describing the Stage.
+        state:
+          type: string
+          description: Current state of the Stage.
+          enum: [STATE_UNSPECIFIED, NOT_STARTED, IN_PROGRESS, COMPLETE]
+        resource:
+          type: string
+          description: Resource of the Stage.
+        resourceUri:
+          type: string
+          description: Link to the current Stage resource.
+        stateMessages:
+          type: array
+          items:
+            $ref: '#/components/schemas/GoogleCloudFunctionsV2alphaStateMessage'
+    GoogleCloudFunctionsV2alphaStateMessage:
+      type: object
+      description: Informational messages about the state of the Cloud Function or Operation.
+      properties:
+        severity:
+          type: string
+          description: Severity of the state message.
+          enum: [SEVERITY_UNSPECIFIED, ERROR, WARNING, INFO]
+        type:
+          type: string
+          description: One-word CamelCase type of the state message.
+        message:
+          type: string
+          description: The message.
+    LocationMetadata:
+      type: object
+      description: Service-specific metadata for the given location.
+      properties:
+        environments:
+          type: array
+          items:
+            type: string
+            enum: [ENVIRONMENT_UNSPECIFIED, GEN_1, GEN_2]
+            description: The supported environments for this location.
+    GenerateDownloadUrlRequest:
+      type: object
+      description: Request message for `GenerateDownloadUrl` method.
+    GenerateDownloadUrlResponse:
+      type: object
+      description: Response message for `GenerateDownloadUrl` method.
+      properties:
+        downloadUrl:
+          type: string
+          description: The generated Google Cloud Storage signed URL that should be used for function source code download.
+    GenerateUploadUrlRequest:
+      type: object
+      description: Request message for `GenerateUploadUrl` method.
+      properties:
+        kmsKeyName:
+          type: string
+          description: Resource name of a KMS crypto key (managed by the user) used to encrypt/decrypt function source code objects in intermediate Cloud Storage buckets.
+        environment:
+          type: string
+          description: The function environment the generated upload url will be used for.
+          enum: [ENVIRONMENT_UNSPECIFIED, GEN_1, GEN_2]
+    GenerateUploadUrlResponse:
+      type: object
+      description: Response message for `GenerateUploadUrl` method.
+      properties:
+        uploadUrl:
+          type: string
+          description: The generated Google Cloud Storage signed URL that should be used for a function source code upload.
+        storageSource:
+          $ref: '#/components/schemas/StorageSource'
+    StorageSource:
+      type: object
+      description: Location of the source in an archive file in Google Cloud Storage.
+      properties:
+        bucket:
+          type: string
+          description: Google Cloud Storage bucket containing the source (see Bucket Name Requirements).
+        object:
+          type: string
+          description: Google Cloud Storage object containing the source. This object must be a gzipped archive file (.tar.gz) containing source to build.
+        generation:
+          type: string
+          format: int64
+          description: Google Cloud Storage generation for the object. If the generation is omitted, the latest generation will be used.
+    RepoSource:
+      type: object
+      description: Location of the source in a Google Cloud Source Repository.
+      properties:
+        branchName:
+          type: string
+          description: Regex matching branches to build.
+        tagName:
+          type: string
+          description: Regex matching tags to build.
+        commitSha:
+          type: string
+          description: Explicit commit SHA to build.
+        projectId:
+          type: string
+          description: ID of the project that owns the Cloud Source Repository. If omitted, the project ID requesting the build is assumed.
+        repoName:
+          type: string
+          description: Name of the Cloud Source Repository.
+        dir:
+          type: string
+          description: Directory, relative to the source root, in which to run the build. This must be a relative path. If a step's `dir` is specified and is an absolute path, this value is ignored for that step's execution.
+    Source:
+      type: object
+      description: The location of the function source code.
+      properties:
+        storageSource:
+          $ref: '#/components/schemas/StorageSource'
+        repoSource:
+          $ref: '#/components/schemas/RepoSource'
+        gitUri:
+          type: string
+          description: If provided, get the source from GitHub repository. This option is valid only for GCF 1st Gen function. Example: https://github.com///blob//.
+    SourceProvenance:
+      type: object
+      description: Provenance of the source. Ways to find the original source, or verify that some source was used for this build.
+      properties:
+        resolvedStorageSource:
+          $ref: '#/components/schemas/StorageSource'
+        resolvedRepoSource:
+          $ref: '#/components/schemas/RepoSource'
+        gitUri:
+          type: string
+          description: A copy of the build's `source.git_uri`, if exists, with any commits resolved.
     BuildConfig:
       type: object
+      description: Describes the Build step of the function that builds a container from the given source.
       properties:
         automaticUpdatePolicy:
           $ref: '#/components/schemas/AutomaticUpdatePolicy'
@@ -193,59 +998,215 @@ components:
           $ref: '#/components/schemas/OnDeployUpdatePolicy'
         build:
           type: string
+          description: Output only. The Cloud Build name of the latest successful deployment of the function.
         runtime:
           type: string
+          description: The runtime in which to run the function.
         entryPoint:
           type: string
+          description: The name of the function (as defined in source code) that will be executed.
         source:
           $ref: '#/components/schemas/Source'
         sourceProvenance:
           $ref: '#/components/schemas/SourceProvenance'
         workerPool:
           type: string
+          description: Name of the Cloud Build Custom Worker Pool that should be used to build the function.
         environmentVariables:
           type: object
           additionalProperties:
             type: string
+          description: User-provided build-time environment variables for the function.
         dockerRegistry:
           type: string
+          description: Docker Registry to use for this deployment. This configuration is only applicable to 1st Gen functions, 2nd Gen functions can only use Artifact Registry.
+          enum: [DOCKER_REGISTRY_UNSPECIFIED, CONTAINER_REGISTRY, ARTIFACT_REGISTRY]
         dockerRepository:
           type: string
+          description: Repository in Artifact Registry to which the function docker image will be pushed after it is built by Cloud Build.
         serviceAccount:
           type: string
+          description: Service account to be used for building the container.
         sourceToken:
           type: string
+          description: An identifier for Firebase function sources.
+    AutomaticUpdatePolicy:
+      type: object
+      description: Security patches are applied automatically to the runtime without requiring the function to be redeployed.
+    OnDeployUpdatePolicy:
+      type: object
+      description: Security patches are only applied when a function is redeployed.
+      properties:
+        runtimeVersion:
+          type: string
+          description: Output only. Contains the runtime version which was used during latest function deployment.
+    EventFilter:
+      type: object
+      description: Filters events based on exact matches on the CloudEvents attributes.
+      properties:
+        attribute:
+          type: string
+          description: The name of a CloudEvents attribute.
+        value:
+          type: string
+          description: The value for the attribute.
+        operator:
+          type: string
+          description: The operator used for matching the events with the value of the filter.
+    EventTrigger:
+      type: object
+      description: Describes EventTrigger, used to request events to be sent from another service.
+      properties:
+        trigger:
+          type: string
+          description: Output only. The resource name of the Eventarc trigger.
+        triggerRegion:
+          type: string
+          description: The region that the trigger will be in.
+        eventType:
+          type: string
+          description: Required. The type of event to observe.
+        eventFilters:
+          type: array
+          items:
+            $ref: '#/components/schemas/EventFilter'
+        pubsubTopic:
+          type: string
+          description: Optional. The name of a Pub/Sub topic in the same project that will be used as the transport topic for the event delivery.
+        serviceAccountEmail:
+          type: string
+          description: Optional. The email of the trigger's service account.
+        retryPolicy:
+          type: string
+          description: Optional. If unset, defaults to ignoring failures.
+          enum: [RETRY_POLICY_UNSPECIFIED, RETRY_POLICY_DO_NOT_RETRY, RETRY_POLICY_RETRY]
+        channel:
+          type: string
+          description: Optional. The name of the channel associated with the trigger.
+        service:
+          type: string
+          description: Optional. The hostname of the service that 1st Gen function should be observed.
+    SecretEnvVar:
+      type: object
+      description: Configuration for a secret environment variable.
+      properties:
+        key:
+          type: string
+          description: Name of the environment variable.
+        projectId:
+          type: string
+          description: Project identifier of the project that contains the secret.
+        secret:
+          type: string
+          description: Name of the secret in secret manager.
+        version:
+          type: string
+          description: Version of the secret (version number or the string 'latest').
+    SecretVolume:
+      type: object
+      description: Configuration for a secret volume.
+      properties:
+        mountPath:
+          type: string
+          description: The path within the container to mount the secret volume.
+        projectId:
+          type: string
+          description: Project identifier of the project that contains the secret.
+        secret:
+          type: string
+          description: Name of the secret in secret manager.
+        versions:
+          type: array
+          items:
+            $ref: '#/components/schemas/SecretVersion'
+    SecretVersion:
+      type: object
+      description: Configuration for a single version.
+      properties:
+        version:
+          type: string
+          description: Version of the secret (version number or the string 'latest').
+        path:
+          type: string
+          description: Relative path of the file under the mount path where the secret value for this version will be fetched and made available.
+    GoogleCloudFunctionsV2StateMessage:
+      type: object
+      description: Informational messages about the state of the Cloud Function or Operation.
+      properties:
+        severity:
+          type: string
+          description: Severity of the state message.
+          enum: [SEVERITY_UNSPECIFIED, ERROR, WARNING, INFO]
+        type:
+          type: string
+          description: One-word CamelCase type of the state message.
+        message:
+          type: string
+          description: The message.
+    UpgradeInfo:
+      type: object
+      description: Information related to a function's eligibility for 1st Gen to 2nd Gen migration.
+      properties:
+        upgradeState:
+          type: string
+          description: UpgradeState of the function.
+          enum: [UPGRADE_STATE_UNSPECIFIED, ELIGIBLE_FOR_2ND_GEN_UPGRADE, UPGRADE_OPERATION_IN_PROGRESS, SETUP_FUNCTION_UPGRADE_CONFIG_SUCCESSFUL, SETUP_FUNCTION_UPGRADE_CONFIG_ERROR, ABORT_FUNCTION_UPGRADE_ERROR, REDIRECT_FUNCTION_UPGRADE_TRAFFIC_SUCCESSFUL, REDIRECT_FUNCTION_UPGRADE_TRAFFIC_ERROR, ROLLBACK_FUNCTION_UPGRADE_TRAFFIC_ERROR, COMMIT_FUNCTION_UPGRADE_ERROR]
+        serviceConfig:
+          $ref: '#/components/schemas/ServiceConfig'
+        eventTrigger:
+          $ref: '#/components/schemas/EventTrigger'
+        buildConfig:
+          $ref: '#/components/schemas/BuildConfig'
     ServiceConfig:
       type: object
+      description: Describes the Service being deployed. Currently Supported : Cloud Run (fully managed).
       properties:
         service:
           type: string
+          description: Output only. Name of the service associated with a Function.
         timeoutSeconds:
           type: integer
+          format: int32
+          description: The function execution timeout.
         availableMemory:
           type: string
+          description: The amount of memory available for a function.
         availableCpu:
           type: string
+          description: The number of CPUs used in a single container instance.
         environmentVariables:
           type: object
           additionalProperties:
             type: string
+          description: Environment variables that shall be available during function execution.
         maxInstanceCount:
           type: integer
+          format: int32
+          description: The limit on the maximum number of function instances that may coexist at a given time.
         minInstanceCount:
           type: integer
+          format: int32
+          description: The limit on the minimum number of function instances that may coexist at a given time.
         vpcConnector:
           type: string
+          description: The Serverless VPC Access connector that this cloud function can connect to.
         vpcConnectorEgressSettings:
           type: string
+          description: The egress settings for the connector, controlling what traffic is diverted through it.
+          enum: [VPC_CONNECTOR_EGRESS_SETTINGS_UNSPECIFIED, PRIVATE_RANGES_ONLY, ALL_TRAFFIC]
         ingressSettings:
           type: string
+          description: The ingress settings for the function, controlling what traffic can reach it.
+          enum: [INGRESS_SETTINGS_UNSPECIFIED, ALLOW_ALL, ALLOW_INTERNAL_ONLY, ALLOW_INTERNAL_AND_GCLB]
         uri:
           type: string
+          description: Output only. URI of the Service deployed.
         serviceAccountEmail:
           type: string
+          description: The email of the service's service account.
         allTrafficOnLatestRevision:
           type: boolean
+          description: Whether 100% of traffic is routed to the latest revision.
         secretEnvironmentVariables:
           type: array
           items:
@@ -256,198 +1217,159 @@ components:
             $ref: '#/components/schemas/SecretVolume'
         revision:
           type: string
+          description: Output only. The name of service revision.
         maxInstanceRequestConcurrency:
           type: integer
+          format: int32
+          description: Sets the maximum number of concurrent requests that each instance can receive.
         securityLevel:
           type: string
+          description: Security level configure whether the function only accepts https.
+          enum: [SECURITY_LEVEL_UNSPECIFIED, SECURE_ALWAYS, SECURE_OPTIONAL]
         binaryAuthorizationPolicy:
           type: string
-    EventTrigger:
+          description: Optional. The binary authorization policy to be checked when deploying the Cloud Run service.
+    ListOperationsResponse:
       type: object
+      description: The response message for Operations.ListOperations.
       properties:
-        trigger:
-          type: string
-        triggerRegion:
-          type: string
-        eventType:
-          type: string
-        eventFilters:
+        operations:
           type: array
           items:
-            $ref: '#/components/schemas/EventFilter'
-        pubsubTopic:
+            $ref: '#/components/schemas/Operation'
+          description: A list of operations that matches the specified filter in the request.
+        nextPageToken:
           type: string
-        serviceAccountEmail:
-          type: string
-        retryPolicy:
-          type: string
-        channel:
-          type: string
-        service:
-          type: string
+          description: The standard List next-page token.
     Operation:
       type: object
+      description: This resource represents a long-running operation that is the result of a network API call.
       properties:
         name:
           type: string
+          description: The server-assigned name, which is only unique within the same service that originally returns it. If you use the default HTTP mapping, the `name` should be a resource name ending with `operations/{unique_id}`.
         metadata:
           type: object
+          description: Service-specific metadata associated with the operation.
+          additionalProperties:
+            type: any
+            description: Properties of the object. Contains field @type with type URL.
         done:
           type: boolean
+          description: If the value is `false`, it means the operation is still in progress. If `true`, the operation is completed, and either `error` or `response` is available.
         error:
           $ref: '#/components/schemas/Status'
+          description: The error result of the operation in case of failure or cancellation.
         response:
           type: object
+          description: The normal, successful response of the operation. If the original method returns no data on success, such as `Delete`, the response is `google.protobuf.Empty`. If the original method is standard `Get`/`Create`/`Update`, the response should be the resource. For other methods, the response should have the type `XxxResponse`, where `Xxx` is the original method name. For example, if the original method name is `TakeSnapshot()`, the inferred response type is `TakeSnapshotResponse`.
+          additionalProperties:
+            type: any
+            description: Properties of the object. Contains field @type with type URL.
     Status:
       type: object
+      description: The `Status` type defines a logical error model that is suitable for different programming environments, including REST APIs and RPC APIs.
       properties:
         code:
           type: integer
+          format: int32
+          description: The status code, which should be an enum value of google.rpc.Code.
         message:
           type: string
+          description: A developer-facing error message, which should be in English. Any user-facing error message should be localized and sent in the google.rpc.Status.details field, or localized by the client.
         details:
           type: array
           items:
             type: object
-    GenerateUploadUrlResponse:
-      type: object
-      properties:
-        uploadUrl:
-          type: string
-        storageSource:
-          $ref: '#/components/schemas/StorageSource'
-    GenerateDownloadUrlResponse:
-      type: object
-      properties:
-        downloadUrl:
-          type: string
+            additionalProperties:
+              type: any
+              description: Properties of the object. Contains field @type with type URL.
+          description: A list of messages that carry the error details. There is a common set of message types for APIs to use.
     ListFunctionsResponse:
       type: object
+      description: Response for the `ListFunctions` method.
       properties:
         functions:
           type: array
           items:
             $ref: '#/components/schemas/Function'
+          description: The functions that match the request.
         nextPageToken:
           type: string
+          description: A token, which can be sent as `page_token` to retrieve the next page. If this field is omitted, there are no subsequent pages.
         unreachable:
           type: array
           items:
             type: string
-    GoogleCloudFunctionsV2StateMessage:
+          description: Locations that could not be reached. The response does not include any functions from these locations.
+    Function:
       type: object
+      description: Describes a Cloud Function that contains user computation executed in response to an event. It encapsulates function and trigger configurations.
       properties:
-        severity:
+        name:
           type: string
-        type:
-          type: string
-        message:
-          type: string
-    UpgradeInfo:
-      type: object
-      properties:
-        upgradeState:
-          type: string
-        serviceConfig:
-          $ref: '#/components/schemas/ServiceConfig'
-        eventTrigger:
-          $ref: '#/components/schemas/EventTrigger'
-        buildConfig:
-          $ref: '#/components/schemas/BuildConfig'
-    StorageSource:
-      type: object
-      properties:
-        bucket:
-          type: string
-        object:
-          type: string
-        generation:
-          type: string
-          format: int64
-        sourceUploadUrl:
-          type: string
-    SecretEnvVar:
-      type: object
-      properties:
-        key:
-          type: string
-        projectId:
-          type: string
-        secret:
-          type: string
-        version:
-          type: string
-    SecretVolume:
-      type: object
-      properties:
-        mountPath:
-          type: string
-        projectId:
-          type: string
-        secret:
-          type: string
-        versions:
-          type: array
-          items:
-            $ref: '#/components/schemas/SecretVersion'
-    SecretVersion:
-      type: object
-      properties:
-        version:
-          type: string
-        path:
-          type: string
-    EventFilter:
-      type: object
-      properties:
-        attribute:
-          type: string
-        value:
-          type: string
-        operator:
-          type: string
-    Source:
-      type: object
-      properties:
-        storageSource:
-          $ref: '#/components/schemas/StorageSource'
-        repoSource:
-          $ref: '#/components/schemas/RepoSource'
-        gitUri:
-          type: string
-    SourceProvenance:
-      type: object
-      properties:
-        resolvedStorageSource:
-          $ref: '#/components/schemas/StorageSource'
-        resolvedRepoSource:
-          $ref: '#/components/schemas/RepoSource'
-        gitUri:
-          type: string
-    RepoSource:
-      type: object
-      properties:
-        branchName:
-          type: string
-        tagName:
-          type: string
-        commitSha:
-          type: string
-        projectId:
-          type: string
-        repoName:
-          type: string
-        dir:
-          type: string
-    AutomaticUpdatePolicy:
-      type: object
-      properties:
-        policy:
-          type: string
+          description: A user-defined name of the function. Function names must be unique globally and match pattern `projects/*/locations/*/functions/*`.
         description:
           type: string
-    OnDeployUpdatePolicy:
-      type: object
-      properties:
-        runtimeVersion:
+          description: User-provided description of a function.
+        buildConfig:
+          $ref: '#/components/schemas/BuildConfig'
+          description: Describes the Build step of the function that builds a container from the given source.
+        serviceConfig:
+          $ref: '#/components/schemas/ServiceConfig'
+          description: Describes the Service being deployed. Currently deploys services to Cloud Run (fully managed).
+        eventTrigger:
+          $ref: '#/components/schemas/EventTrigger'
+          description: An Eventarc trigger managed by Google Cloud Functions that fires events in response to a condition in another service.
+        state:
           type: string
+          readOnly: true
+          description: Output only. State of the function.
+          enum:
+            - STATE_UNSPECIFIED
+            - ACTIVE
+            - FAILED
+            - DEPLOYING
+            - DELETING
+            - UNKNOWN
+        updateTime:
+          type: string
+          format: date-time
+          readOnly: true
+          description: Output only. The last update timestamp of a Cloud Function.
+        labels:
+          type: object
+          additionalProperties:
+            type: string
+          description: Labels associated with this Cloud Function.
+        stateMessages:
+          type: array
+          items:
+            $ref: '#/components/schemas/GoogleCloudFunctionsV2StateMessage'
+          description: Output only. State Messages for this Cloud Function.
+        environment:
+          type: string
+          description: Describe whether the function is 1st Gen or 2nd Gen.
+          enum:
+            - ENVIRONMENT_UNSPECIFIED
+            - GEN_1
+            - GEN_2
+        upgradeInfo:
+          $ref: '#/components/schemas/UpgradeInfo'
+          description: Output only. UpgradeInfo for this Cloud Function
+        url:
+          type: string
+          readOnly: true
+          description: Output only. The deployed url for the function.
+        kmsKeyName:
+          type: string
+          description: Resource name of a KMS crypto key (managed by the user) used to encrypt/decrypt function resources. It must match the pattern `projects/{project}/locations/{location}/keyRings/{key_ring}/cryptoKeys/{crypto_key}`.
+        satisfiesPzs:
+          type: boolean
+          readOnly: true
+          description: Output only. Reserved for future use.
+        createTime:
+          type: string
+          format: date-time
+          readOnly: true
+          description: Output only. The create timestamp of a Cloud Function. This is only applicable to 2nd Gen functions.
