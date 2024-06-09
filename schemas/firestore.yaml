@@ -71,6 +71,95 @@ paths:
         - oauth2:
             - https://www.googleapis.com/auth/cloud-platform
             - https://www.googleapis.com/auth/datastore
+  /v1/{parent}/databases:
+    post:
+      operationId: createDatabase
+      summary: Create a database.
+      parameters:
+        - name: parent
+          in: path
+          required: true
+          schema:
+            type: string
+          description: A parent name of the form projects/{project_id}
+        - name: databaseId
+          in: query
+          schema:
+            type: string
+          description: >-
+            The ID to use for the database, which will become the final component
+            of the database's resource name. This value should be 4-63 characters.
+            Valid characters are /a-z-/ with first character a letter and the last a letter or a number.
+            Must not be UUID-like /[0-9a-f]{8}(-[0-9a-f]{4}){3}-[0-9a-f]{12}/.
+            "(default)" database id is also valid.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GoogleFirestoreAdminV1Database'
+      responses:
+        '200':
+          description: A long-running operation.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GoogleLongrunningOperation'
+      security:
+        - oauth2:
+            - https://www.googleapis.com/auth/cloud-platform
+            - https://www.googleapis.com/auth/datastore
+  /v1/{name}:
+    get:
+      operationId: getDatabase
+      summary: Gets information about a database.
+      parameters:
+        - name: name
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Required. A name of the form projects/{project_id}/databases/{database_id}
+      responses:
+        '200':
+          description: A database object.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GoogleFirestoreAdminV1Database'
+      security:
+        - oauth2:
+            - https://www.googleapis.com/auth/cloud-platform
+            - https://www.googleapis.com/auth/datastore
+    delete:
+      operationId: deleteDatabase
+      summary: Deletes a database.
+      parameters:
+        - name: name
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Required. A name of the form projects/{project_id}/databases/{database_id}
+        - name: etag
+          in: query
+          schema:
+            type: string
+          description: >-
+            The current etag of the Database. If an etag is provided and does not
+            match the current etag of the database, deletion will be blocked and
+            a FAILED_PRECONDITION error will be returned.
+      responses:
+        '200':
+          description: A long-running operation.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GoogleLongrunningOperation'
+      security:
+        - oauth2:
+            - https://www.googleapis.com/auth/cloud-platform
+            - https://www.googleapis.com/auth/datastore
 components:
   schemas:
     ListLocationsResponse:
@@ -165,6 +254,529 @@ components:
               type: string
               description: Properties of the object. Contains field @type with type URL.
           description: A list of messages that carry the error details.
+    GoogleFirestoreAdminV1Database:
+      type: object
+      description: A Cloud Firestore Database.
+      properties:
+        name:
+          type: string
+          description: The resource name of the Database. Format: projects/{project}/databases/{database}
+        locationId:
+          type: string
+          description: The location id of the database. For example: "us-east1".
+        type:
+          type: string
+          enum:
+            - DATABASE_TYPE_UNSPECIFIED
+            - FIRESTORE_NATIVE
+            - DATASTORE_MODE
+          description: The type of the database.
+        createTime:
+          type: string
+          format: date-time
+          description: The timestamp when the database was created.
+        updateTime:
+          type: string
+          format: date-time
+          description: The timestamp when the database was last updated.
+        etag:
+          type: string
+          description: The etag of the database.
+    GoogleFirestoreAdminV1ListDatabasesResponse:
+      type: object
+      description: The response for FirestoreAdmin.ListDatabases.
+      properties:
+        databases:
+          type: array
+          items:
+            $ref: '#/components/schemas/GoogleFirestoreAdminV1Database'
+          description: A list of databases in the project.
+    GoogleLongrunningOperation:
+      type: object
+      description: This resource represents a long-running operation that is the result of a network API call.
+      properties:
+        name:
+          type: string
+          description: The server-assigned name, which is only unique within the same service that originally returns it.
+        metadata:
+          type: object
+          additionalProperties:
+            type: string
+            description: Properties of the object. Contains field @type with type URL.
+          description: Service-specific metadata associated with the operation.
+        done:
+          type: boolean
+          description: If the value is false, it means the operation is still in progress. If true, the operation is completed, and either error or response is available.
+        error:
+          $ref: '#/components/schemas/Status'
+          description: The error result of the operation in case of failure or cancellation.
+        response:
+          type: object
+          additionalProperties:
+            type: string
+            description: Properties of the object. Contains field @type with type URL.
+          description: The normal, successful response of the operation. If the original method returns no data on success, such as Delete, the response is google.protobuf.Empty.
+    Status:
+      type: object
+      description: The Status type defines a logical error model that is suitable for different programming environments, including REST APIs and RPC APIs.
+      properties:
+        code:
+          type: integer
+          format: int32
+          description: The status code, which should be an enum value of google.rpc.Code.
+        message:
+          type: string
+          description: A developer-facing error message, which should be in English.
+        details:
+          type: array
+          items:
+            type: object
+            additionalProperties:
+              type: string
+              description: Properties of the object. Contains field @type with type URL.
+          description: A list of messages that carry the error details.
+    Empty:
+      type: object
+      description: A generic empty message.
+securitySchemes:
+  oauth2:
+    type: oauth2
+    flows:
+      implicit:
+        authorizationUrl: https://accounts.google.com/o/oauth2/auth
+        scopes:
+          https://www.googleapis.com/auth/cloud-platform: View and manage your data across Google Cloud Platform services
+          https://www.googleapis.com/auth/datastore: View and manage your Google Cloud Datastore data
+paths:
+  /v1/{name}/locations/backups:
+    get:
+      operationId: listBackups
+      summary: Lists all the backups.
+      parameters:
+        - name: parent
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Required. The location to list backups from. Format is `projects/{project}/locations/{location}`. Use `{location} = '-'` to list backups from all locations for the given project.
+      responses:
+        '200':
+          description: A list of backups.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GoogleFirestoreAdminV1ListBackupsResponse'
+      security:
+        - oauth2:
+            - https://www.googleapis.com/auth/cloud-platform
+            - https://www.googleapis.com/auth/datastore
+  /v1/{name}/locations/backups/{backupId}:
+    get:
+      operationId: getBackup
+      summary: Gets information about a backup.
+      parameters:
+        - name: name
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Required. Name of the backup to fetch. Format is `projects/{project}/locations/{location}/backups/{backup}`.
+      responses:
+        '200':
+          description: A backup object.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GoogleFirestoreAdminV1Backup'
+      security:
+        - oauth2:
+            - https://www.googleapis.com/auth/cloud-platform
+            - https://www.googleapis.com/auth/datastore
+    delete:
+      operationId: deleteBackup
+      summary: Deletes a backup.
+      parameters:
+        - name: name
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Required. Name of the backup to delete. format is `projects/{project}/locations/{location}/backups/{backup}`.
+      responses:
+        '200':
+          description: An empty response.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Empty'
+      security:
+        - oauth2:
+            - https://www.googleapis.com/auth/cloud-platform
+            - https://www.googleapis.com/auth/datastore
+  /v1/{name}/locations/backups/{backupId}/restore:
+    post:
+      operationId: restoreBackup
+      summary: Restores a backup to a database.
+      parameters:
+        - name: parent
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Required. The project to restore the database in. Format is `projects/{project_id}`.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GoogleFirestoreAdminV1RestoreDatabaseRequest'
+      responses:
+        '200':
+          description: A long-running operation.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GoogleLongrunningOperation'
+      security:
+        - oauth2:
+            - https://www.googleapis.com/auth/cloud-platform
+            - https://www.googleapis.com/auth/datastore
+components:
+  schemas:
+    GoogleFirestoreAdminV1Backup:
+      type: object
+      description: A Cloud Firestore backup.
+      properties:
+        name:
+          type: string
+          description: The resource name of the backup. Format: `projects/{project}/locations/{location}/backups/{backup}`
+        database:
+          type: string
+          description: The resource name of the database from which this backup was created.
+        state:
+          type: string
+          enum:
+            - STATE_UNSPECIFIED
+            - CREATING
+            - READY
+            - FAILED
+            - DELETING
+          description: The state of the backup.
+        createTime:
+          type: string
+          format: date-time
+          description: The timestamp when the backup was created.
+        updateTime:
+          type: string
+          format: date-time
+          description: The timestamp when the backup was last updated.
+    GoogleFirestoreAdminV1ListBackupsResponse:
+      type: object
+      description: The response for FirestoreAdmin.ListBackups.
+      properties:
+        backups:
+          type: array
+          items:
+            $ref: '#/components/schemas/GoogleFirestoreAdminV1Backup'
+          description: A list of backups.
+        nextPageToken:
+          type: string
+          description: The standard List next-page token.
+    GoogleFirestoreAdminV1RestoreDatabaseRequest:
+      type: object
+      description: The request for FirestoreAdmin.RestoreDatabase.
+      properties:
+        backup:
+          type: string
+          description: Required. The resource name of the backup to restore. Format: `projects/{project}/locations/{location}/backups/{backup}`.
+securitySchemes:
+  oauth2:
+    type: oauth2
+    flows:
+      implicit:
+        authorizationUrl: https://accounts.google.com/o/oauth2/auth
+        scopes:
+          https://www.googleapis.com/auth/cloud-platform: View and manage your data across Google Cloud Platform services
+          https://www.googleapis.com/auth/datastore: View and manage your Google Cloud Datastore data
+paths:
+  /v1/{parent}/databases/backupSchedules:
+    post:
+      operationId: createBackupSchedule
+      summary: Creates a backup schedule on a database.
+      parameters:
+        - name: parent
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Required. The parent database. Format `projects/{project}/databases/{database}`
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GoogleFirestoreAdminV1BackupSchedule'
+      responses:
+        '200':
+          description: A backup schedule object.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GoogleFirestoreAdminV1BackupSchedule'
+      security:
+        - oauth2:
+            - https://www.googleapis.com/auth/cloud-platform
+            - https://www.googleapis.com/auth/datastore
+  /v1/{name}:
+    get:
+      operationId: getBackupSchedule
+      summary: Gets information about a backup schedule.
+      parameters:
+        - name: name
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Required. The name of the backup schedule. Format `projects/{project}/databases/{database}/backupSchedules/{backup_schedule}`
+      responses:
+        '200':
+          description: A backup schedule object.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GoogleFirestoreAdminV1BackupSchedule'
+      security:
+        - oauth2:
+            - https://www.googleapis.com/auth/cloud-platform
+            - https://www.googleapis.com/auth/datastore
+    delete:
+      operationId: deleteBackupSchedule
+      summary: Deletes a backup schedule.
+      parameters:
+        - name: name
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Required. The name of the backup schedule. Format `projects/{project}/databases/{database}/backupSchedules/{backup_schedule}`
+      responses:
+        '200':
+          description: An empty response.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Empty'
+      security:
+        - oauth2:
+            - https://www.googleapis.com/auth/cloud-platform
+            - https://www.googleapis.com/auth/datastore
+    patch:
+      operationId: updateBackupSchedule
+      summary: Updates a backup schedule.
+      parameters:
+        - name: name
+          in: path
+          required: true
+          schema:
+            type: string
+          description: >-
+            Output only. The unique backup schedule identifier across all locations and
+            databases for the given project. This will be auto-assigned. Format is `projects/{project}/databases/{database}/backupSchedules/{backup_schedule}`
+        - name: updateMask
+          in: query
+          schema:
+            type: string
+          description: The list of fields to be updated.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GoogleFirestoreAdminV1BackupSchedule'
+      responses:
+        '200':
+          description: A backup schedule object.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GoogleFirestoreAdminV1BackupSchedule'
+      security:
+        - oauth2:
+            - https://www.googleapis.com/auth/cloud-platform
+            - https://www.googleapis.com/auth/datastore
+components:
+  schemas:
+    GoogleFirestoreAdminV1BackupSchedule:
+      type: object
+      description: A Cloud Firestore backup schedule.
+      properties:
+        name:
+          type: string
+          description: The resource name of the backup schedule. Format: `projects/{project}/databases/{database}/backupSchedules/{backup_schedule}`
+        database:
+          type: string
+          description: The resource name of the database for which this backup schedule applies.
+        schedule:
+          type: string
+          description: The schedule for the backup in cron format.
+        retention:
+          type: integer
+          format: int32
+          description: The number of backups to retain.
+        state:
+          type: string
+          enum:
+            - STATE_UNSPECIFIED
+            - ACTIVE
+            - PAUSED
+            - DELETING
+          description: The state of the backup schedule.
+        createTime:
+          type: string
+          format: date-time
+          description: The timestamp when the backup schedule was created.
+        updateTime:
+          type: string
+          format: date-time
+          description: The timestamp when the backup schedule was last updated.
+        etag:
+          type: string
+          description: The etag of the backup schedule.
+securitySchemes:
+  oauth2:
+    type: oauth2
+    flows:
+      implicit:
+        authorizationUrl: https://accounts.google.com/o/oauth2/auth
+        scopes:
+          https://www.googleapis.com/auth/cloud-platform: View and manage your data across Google Cloud Platform services
+          https://www.googleapis.com/auth/datastore: View and manage your Google Cloud Datastore data
+paths:
+  /v1/{parent}/databases/operations:
+    get:
+      operationId: listOperations
+      summary: Lists operations that match the specified filter in the request.
+      parameters:
+        - name: name
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Required. The name of the operation's parent resource.
+        - name: filter
+          in: query
+          schema:
+            type: string
+          description: The standard list filter.
+        - name: pageSize
+          in: query
+          schema:
+            type: integer
+            format: int32
+          description: The standard list page size.
+        - name: pageToken
+          in: query
+          schema:
+            type: string
+          description: The standard list page token.
+      responses:
+        '200':
+          description: A list of operations.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GoogleLongrunningListOperationsResponse'
+      security:
+        - oauth2:
+            - https://www.googleapis.com/auth/cloud-platform
+            - https://www.googleapis.com/auth/datastore
+  /v1/{name}:
+    get:
+      operationId: getOperation
+      summary: Gets the latest state of a long-running operation.
+      parameters:
+        - name: name
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Required. The name of the operation resource.
+      responses:
+        '200':
+          description: A long-running operation object.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GoogleLongrunningOperation'
+      security:
+        - oauth2:
+            - https://www.googleapis.com/auth/cloud-platform
+            - https://www.googleapis.com/auth/datastore
+    delete:
+      operationId: deleteOperation
+      summary: Deletes a long-running operation.
+      parameters:
+        - name: name
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Required. The name of the operation resource to be deleted.
+      responses:
+        '200':
+          description: An empty response.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Empty'
+      security:
+        - oauth2:
+            - https://www.googleapis.com/auth/cloud-platform
+            - https://www.googleapis.com/auth/datastore
+    post:
+      operationId: cancelOperation
+      summary: Starts asynchronous cancellation on a long-running operation.
+      parameters:
+        - name: name
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Required. The name of the operation resource to be cancelled.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GoogleLongrunningCancelOperationRequest'
+      responses:
+        '200':
+          description: An empty response.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Empty'
+      security:
+        - oauth2:
+            - https://www.googleapis.com/auth/cloud-platform
+            - https://www.googleapis.com/auth/datastore
+components:
+  schemas:
+    GoogleLongrunningCancelOperationRequest:
+      type: object
+      description: The request message for Operations.CancelOperation.
+    GoogleLongrunningListOperationsResponse:
+      type: object
+      description: The response message for Operations.ListOperations.
+      properties:
+        operations:
+          type: array
+          items:
+            $ref: '#/components/schemas/GoogleLongrunningOperation'
+          description: A list of operations that matches the specified filter in the request.
+        nextPageToken:
+          type: string
+          description: The standard List next-page token.
 securitySchemes:
   oauth2:
     type: oauth2
