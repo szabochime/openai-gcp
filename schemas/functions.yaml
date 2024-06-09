@@ -1,0 +1,453 @@
+openapi: 3.1.0
+info:
+  title: Cloud Functions API
+  description: Manages lightweight user-provided functions executed in response to events.
+  version: 1.0.0
+servers:
+  - url: https://cloudfunctions.googleapis.com/v2
+    description: Google Cloud Functions API
+paths:
+  /{parent}/functions:
+    post:
+      operationId: createFunction
+      summary: Creates a new function.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Function'
+      parameters:
+        - name: parent
+          in: path
+          required: true
+          schema:
+            type: string
+            example: projects/{project_id}/locations/{location_id}
+      responses:
+        '200':
+          description: Function created successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Operation'
+    get:
+      operationId: listFunctions
+      summary: Lists all functions in the specified project.
+      parameters:
+        - name: parent
+          in: path
+          required: true
+          schema:
+            type: string
+            example: projects/{project_id}/locations/{location_id}
+      responses:
+        '200':
+          description: List of functions retrieved successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ListFunctionsResponse'
+  /{name}:
+    delete:
+      operationId: deleteFunction
+      summary: Deletes a function.
+      parameters:
+        - name: name
+          in: path
+          required: true
+          schema:
+            type: string
+            example: projects/{project_id}/locations/{location_id}/functions/{function_id}
+      responses:
+        '200':
+          description: Function deleted successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Operation'
+    get:
+      operationId: getFunction
+      summary: Gets information about a function.
+      parameters:
+        - name: name
+          in: path
+          required: true
+          schema:
+            type: string
+            example: projects/{project_id}/locations/{location_id}/functions/{function_id}
+      responses:
+        '200':
+          description: Function details retrieved successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Function'
+    patch:
+      operationId: updateFunction
+      summary: Updates a function.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Function'
+      parameters:
+        - name: function.name
+          in: path
+          required: true
+          schema:
+            type: string
+            example: projects/{project_id}/locations/{location_id}/functions/{function_id}
+      responses:
+        '200':
+          description: Function updated successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Operation'
+  /{name}:generateDownloadUrl:
+    post:
+      operationId: generateDownloadUrl
+      summary: Generates a download URL for the function source code.
+      parameters:
+        - name: name
+          in: path
+          required: true
+          schema:
+            type: string
+            example: projects/{project_id}/locations/{location_id}/functions/{function_id}
+      responses:
+        '200':
+          description: Download URL generated successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GenerateDownloadUrlResponse'
+  /{parent}/functions:generateUploadUrl:
+    post:
+      operationId: generateUploadUrl
+      summary: Generates an upload URL for the function source code.
+      parameters:
+        - name: parent
+          in: path
+          required: true
+          schema:
+            type: string
+            example: projects/{project_id}/locations/{location_id}
+      responses:
+        '200':
+          description: Upload URL generated successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GenerateUploadUrlResponse'
+
+components:
+  schemas:
+    Function:
+      type: object
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+        buildConfig:
+          $ref: '#/components/schemas/BuildConfig'
+        serviceConfig:
+          $ref: '#/components/schemas/ServiceConfig'
+        eventTrigger:
+          $ref: '#/components/schemas/EventTrigger'
+        state:
+          type: string
+        updateTime:
+          type: string
+          format: date-time
+        labels:
+          type: object
+          additionalProperties:
+            type: string
+        stateMessages:
+          type: array
+          items:
+            $ref: '#/components/schemas/GoogleCloudFunctionsV2StateMessage'
+        environment:
+          type: string
+        upgradeInfo:
+          $ref: '#/components/schemas/UpgradeInfo'
+        url:
+          type: string
+        kmsKeyName:
+          type: string
+        satisfiesPzs:
+          type: boolean
+        createTime:
+          type: string
+          format: date-time
+    BuildConfig:
+      type: object
+      properties:
+        automaticUpdatePolicy:
+          $ref: '#/components/schemas/AutomaticUpdatePolicy'
+        onDeployUpdatePolicy:
+          $ref: '#/components/schemas/OnDeployUpdatePolicy'
+        build:
+          type: string
+        runtime:
+          type: string
+        entryPoint:
+          type: string
+        source:
+          $ref: '#/components/schemas/Source'
+        sourceProvenance:
+          $ref: '#/components/schemas/SourceProvenance'
+        workerPool:
+          type: string
+        environmentVariables:
+          type: object
+          additionalProperties:
+            type: string
+        dockerRegistry:
+          type: string
+        dockerRepository:
+          type: string
+        serviceAccount:
+          type: string
+        sourceToken:
+          type: string
+    ServiceConfig:
+      type: object
+      properties:
+        service:
+          type: string
+        timeoutSeconds:
+          type: integer
+        availableMemory:
+          type: string
+        availableCpu:
+          type: string
+        environmentVariables:
+          type: object
+          additionalProperties:
+            type: string
+        maxInstanceCount:
+          type: integer
+        minInstanceCount:
+          type: integer
+        vpcConnector:
+          type: string
+        vpcConnectorEgressSettings:
+          type: string
+        ingressSettings:
+          type: string
+        uri:
+          type: string
+        serviceAccountEmail:
+          type: string
+        allTrafficOnLatestRevision:
+          type: boolean
+        secretEnvironmentVariables:
+          type: array
+          items:
+            $ref: '#/components/schemas/SecretEnvVar'
+        secretVolumes:
+          type: array
+          items:
+            $ref: '#/components/schemas/SecretVolume'
+        revision:
+          type: string
+        maxInstanceRequestConcurrency:
+          type: integer
+        securityLevel:
+          type: string
+        binaryAuthorizationPolicy:
+          type: string
+    EventTrigger:
+      type: object
+      properties:
+        trigger:
+          type: string
+        triggerRegion:
+          type: string
+        eventType:
+          type: string
+        eventFilters:
+          type: array
+          items:
+            $ref: '#/components/schemas/EventFilter'
+        pubsubTopic:
+          type: string
+        serviceAccountEmail:
+          type: string
+        retryPolicy:
+          type: string
+        channel:
+          type: string
+        service:
+          type: string
+    Operation:
+      type: object
+      properties:
+        name:
+          type: string
+        metadata:
+          type: object
+        done:
+          type: boolean
+        error:
+          $ref: '#/components/schemas/Status'
+        response:
+          type: object
+    Status:
+      type: object
+      properties:
+        code:
+          type: integer
+        message:
+          type: string
+        details:
+          type: array
+          items:
+            type: object
+    GenerateUploadUrlResponse:
+      type: object
+      properties:
+        uploadUrl:
+          type: string
+        storageSource:
+          $ref: '#/components/schemas/StorageSource'
+    GenerateDownloadUrlResponse:
+      type: object
+      properties:
+        downloadUrl:
+          type: string
+    ListFunctionsResponse:
+      type: object
+      properties:
+        functions:
+          type: array
+          items:
+            $ref: '#/components/schemas/Function'
+        nextPageToken:
+          type: string
+        unreachable:
+          type: array
+          items:
+            type: string
+    GoogleCloudFunctionsV2StateMessage:
+      type: object
+      properties:
+        severity:
+          type: string
+        type:
+          type: string
+        message:
+          type: string
+    UpgradeInfo:
+      type: object
+      properties:
+        upgradeState:
+          type: string
+        serviceConfig:
+          $ref: '#/components/schemas/ServiceConfig'
+        eventTrigger:
+          $ref: '#/components/schemas/EventTrigger'
+        buildConfig:
+          $ref: '#/components/schemas/BuildConfig'
+    StorageSource:
+      type: object
+      properties:
+        bucket:
+          type: string
+        object:
+          type: string
+        generation:
+          type: string
+          format: int64
+        sourceUploadUrl:
+          type: string
+    SecretEnvVar:
+      type: object
+      properties:
+        key:
+          type: string
+        projectId:
+          type: string
+        secret:
+          type: string
+        version:
+          type: string
+    SecretVolume:
+      type: object
+      properties:
+        mountPath:
+          type: string
+        projectId:
+          type: string
+        secret:
+          type: string
+        versions:
+          type: array
+          items:
+            $ref: '#/components/schemas/SecretVersion'
+    SecretVersion:
+      type: object
+      properties:
+        version:
+          type: string
+        path:
+          type: string
+    EventFilter:
+      type: object
+      properties:
+        attribute:
+          type: string
+        value:
+          type: string
+        operator:
+          type: string
+    Source:
+      type: object
+      properties:
+        storageSource:
+          $ref: '#/components/schemas/StorageSource'
+        repoSource:
+          $ref: '#/components/schemas/RepoSource'
+        gitUri:
+          type: string
+    SourceProvenance:
+      type: object
+      properties:
+        resolvedStorageSource:
+          $ref: '#/components/schemas/StorageSource'
+        resolvedRepoSource:
+          $ref: '#/components/schemas/RepoSource'
+        gitUri:
+          type: string
+    RepoSource:
+      type: object
+      properties:
+        branchName:
+          type: string
+        tagName:
+          type: string
+        commitSha:
+          type: string
+        projectId:
+          type: string
+        repoName:
+          type: string
+        dir:
+          type: string
+    AutomaticUpdatePolicy:
+      type: object
+      properties:
+        policy:
+          type: string
+        description:
+          type: string
+    OnDeployUpdatePolicy:
+      type: object
+      properties:
+        runtimeVersion:
+          type: string
