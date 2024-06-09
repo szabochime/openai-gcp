@@ -1,0 +1,678 @@
+openapi: 3.1.0
+info:
+  title: BigQuery API
+  description: A data platform for customers to create, manage, share, and query data.
+  version: 2.0.0
+servers:
+  - url: https://bigquery.googleapis.com/bigquery/v2
+    description: Main production server
+  - url: https://bigquery.me-central2.rep.googleapis.com/
+    description: Regional Endpoint (me-central2)
+  - url: https://bigquery.europe-west3.rep.googleapis.com/
+    description: Regional Endpoint (europe-west3)
+  - url: https://bigquery.us-east4.rep.googleapis.com/
+    description: Regional Endpoint (us-east4)
+paths:
+  /projects/{projectId}/queries/{jobId}:
+    get:
+      operationId: getQueryResults
+      summary: Get Query Results
+      description: RPC to get the results of a query job.
+      parameters:
+        - name: projectId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: jobId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: timeoutMs
+          in: query
+          schema:
+            type: integer
+            format: uint32
+            description: Specifies the maximum amount of time, in milliseconds, that the client is willing to wait for the query to complete.
+      responses:
+        '200':
+          description: A successful response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetQueryResultsResponse'
+        '400':
+          description: Bad Request
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
+        '404':
+          description: Not Found
+
+  /projects/{projectId}/jobs:
+    post:
+      operationId: insertJob
+      summary: Insert Job
+      description: Starts a new asynchronous job.
+      parameters:
+        - name: projectId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Job'
+      responses:
+        '200':
+          description: Job successfully created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Job'
+        '400':
+          description: Bad Request
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden
+        '404':
+          description: Not Found
+components:
+  schemas:
+    JobReference:
+      type: object
+      properties:
+        jobId:
+          type: string
+          description: The ID of the job.
+        location:
+          type: string
+          description: The geographic location of the job.
+        projectId:
+          type: string
+          description: The ID of the project containing this job.
+    Job:
+      type: object
+      properties:
+        configuration:
+          $ref: '#/components/schemas/JobConfiguration'
+        jobReference:
+          $ref: '#/components/schemas/JobReference'
+        statistics:
+          $ref: '#/components/schemas/JobStatistics'
+        status:
+          $ref: '#/components/schemas/JobStatus'
+        kind:
+          type: string
+          description: The resource type of the response.
+          default: bigquery#job
+  components:
+  schemas:
+    JobConfiguration:
+      type: object
+      properties:
+        dryRun:
+          type: boolean
+          description: If set, don't actually run this job. A valid query will return a mostly empty response with some processing statistics.
+        jobType:
+          type: string
+          description: The type of the job. Can be QUERY, LOAD, EXTRACT, COPY or UNKNOWN.
+        query:
+          $ref: '#/components/schemas/JobConfigurationQuery'
+    JobStatistics:
+      type: object
+      properties:
+        creationTime:
+          type: string
+          format: int64
+          description: The creation time of the job, in milliseconds since the epoch.
+        endTime:
+          type: string
+          format: int64
+          description: The end time of the job, in milliseconds since the epoch.
+        startTime:
+          type: string
+          format: int64
+          description: The start time of the job, in milliseconds since the epoch.
+        totalBytesProcessed:
+          type: string
+          format: int64
+          description: [Output-only] The total number of bytes processed by this job.
+    JobStatus:
+      type: object
+      properties:
+        errorResult:
+          $ref: '#/components/schemas/ErrorProto'
+        errors:
+          type: array
+          items:
+            $ref: '#/components/schemas/ErrorProto'
+        state:
+          type: string
+          description: The state of the job.
+    ErrorProto:
+      type: object
+      properties:
+        debugInfo:
+          type: string
+          description: Debugging information.
+        location:
+          type: string
+          description: Specifies where the error occurred.
+        message:
+          type: string
+          description: A human-readable description of the error.
+        reason:
+          type: string
+          description: A short error code that summarizes the error.
+    JobConfigurationQuery:
+      type: object
+      properties:
+        allowLargeResults:
+          type: boolean
+          description: If true, allows the query to produce arbitrarily large result tables at a slight cost in performance.
+        createDisposition:
+          type: string
+          description: Specifies whether the job is allowed to create new tables.
+        destinationTable:
+          $ref: '#/components/schemas/TableReference'
+        query:
+          type: string
+          description: [Required] SQL query text to execute.
+        useLegacySql:
+          type: boolean
+          description: Specifies whether to use BigQuery's legacy SQL dialect for this query.
+    GetQueryResultsResponse:
+      type: object
+      properties:
+        cacheHit:
+          type: boolean
+          description: Whether the query result was fetched from the query cache.
+        errors:
+          type: array
+          items:
+            $ref: '#/components/schemas/ErrorProto'
+          description: The first errors or warnings encountered during the running of the job.
+        etag:
+          type: string
+          description: A hash of this response.
+        jobComplete:
+          type: boolean
+          description: Whether the query has completed or not.
+        jobReference:
+          $ref: '#/components/schemas/JobReference'
+        kind:
+          type: string
+          description: The resource type of the response.
+          default: bigquery#getQueryResultsResponse
+        numDmlAffectedRows:
+          type: string
+          format: int64
+          description: The number of rows affected by a DML statement.
+        pageToken:
+          type: string
+          description: A token used for paging results.
+        rows:
+          type: array
+          items:
+            $ref: '#/components/schemas/TableRow'
+        schema:
+          $ref: '#/components/schemas/TableSchema'
+        totalBytesProcessed:
+          type: string
+          format: int64
+          description: The total number of bytes processed for this query.
+        totalRows:
+          type: string
+          format: uint64
+          description: The total number of rows in the complete query result set.
+components:
+  schemas:
+    TableRow:
+      type: object
+      properties:
+        f:
+          type: array
+          items:
+            $ref: '#/components/schemas/TableCell'
+    TableSchema:
+      type: object
+      properties:
+        fields:
+          type: array
+          items:
+            $ref: '#/components/schemas/TableFieldSchema'
+    TableFieldSchema:
+      type: object
+      properties:
+        name:
+          type: string
+          description: The field name.
+        type:
+          type: string
+          description: The field data type.
+        mode:
+          type: string
+          description: The field mode.
+        description:
+          type: string
+          description: The field description.
+        fields:
+          type: array
+          items:
+            $ref: '#/components/schemas/TableFieldSchema'
+    TableCell:
+      type: object
+      properties:
+        v:
+          type: string
+    TableReference:
+      type: object
+      properties:
+        datasetId:
+          type: string
+          description: The ID of the dataset containing this table.
+        projectId:
+          type: string
+          description: The ID of the project containing this table.
+        tableId:
+          type: string
+          description: The ID of the table.
+    Dataset:
+      type: object
+      properties:
+        access:
+          type: array
+          items:
+            $ref: '#/components/schemas/DatasetAccessEntry'
+        creationTime:
+          type: string
+          format: int64
+          description: Output only. The time when this dataset was created, in milliseconds since the epoch.
+        datasetReference:
+          $ref: '#/components/schemas/DatasetReference'
+        defaultEncryptionConfiguration:
+          $ref: '#/components/schemas/EncryptionConfiguration'
+        defaultPartitionExpirationMs:
+          type: string
+          format: int64
+          description: This default partition expiration, expressed in milliseconds.
+        description:
+          type: string
+          description: Optional. A user-friendly description of the dataset.
+        etag:
+          type: string
+          description: Output only. A hash of the resource.
+        friendlyName:
+          type: string
+          description: Optional. A descriptive name for the dataset.
+        id:
+          type: string
+          description: Output only. The fully-qualified unique name of the dataset in the format projectId:datasetId.
+        kind:
+          type: string
+          default: bigquery#dataset
+          description: Output only. The resource type.
+        labels:
+          type: object
+          additionalProperties:
+            type: string
+        lastModifiedTime:
+          type: string
+          format: int64
+          description: Output only. The date when this dataset was last modified, in milliseconds since the epoch.
+        location:
+          type: string
+          description: The geographic location where the dataset should reside.
+        selfLink:
+          type: string
+          description: Output only. A URL that can be used to access the resource again.
+    DatasetAccessEntry:
+      type: object
+      properties:
+        role:
+          type: string
+          description: An IAM role ID that should be granted to the user, group, or domain specified in this access entry.
+        userByEmail:
+          type: string
+          description: An email address of a user to grant access to.
+components:
+  schemas:
+    DatasetReference:
+      type: object
+      properties:
+        datasetId:
+          type: string
+          description: The ID of the dataset.
+        projectId:
+          type: string
+          description: The ID of the project containing this dataset.
+    EncryptionConfiguration:
+      type: object
+      properties:
+        kmsKeyName:
+          type: string
+          description: Describes the Cloud KMS encryption key that will be used to protect the destination BigQuery table.
+    QueryRequest:
+      type: object
+      properties:
+        defaultDataset:
+          $ref: '#/components/schemas/DatasetReference'
+        dryRun:
+          type: boolean
+          description: If set, don't actually run this job. A valid query will return a mostly empty response with some processing statistics.
+        kind:
+          type: string
+          description: The resource type of the request.
+          default: bigquery#queryRequest
+        location:
+          type: string
+          description: The geographic location where the job should run.
+        maxResults:
+          type: integer
+          format: uint32
+          description: The maximum number of rows of data to return per page of results.
+        query:
+          type: string
+          description: [Required] SQL query text to execute.
+        timeoutMs:
+          type: integer
+          format: uint32
+          description: Specifies the maximum amount of time, in milliseconds, that the client is willing to wait for the query to complete.
+        useLegacySql:
+          type: boolean
+          description: Specifies whether to use BigQuery's legacy SQL dialect for this query.
+    QueryResponse:
+      type: object
+      properties:
+        cacheHit:
+          type: boolean
+          description: Whether the query result was fetched from the query cache.
+        errors:
+          type: array
+          items:
+            $ref: '#/components/schemas/ErrorProto'
+        jobComplete:
+          type: boolean
+          description: Whether the query has completed or not.
+        jobReference:
+          $ref: '#/components/schemas/JobReference'
+        kind:
+          type: string
+          description: The resource type of the response.
+          default: bigquery#queryResponse
+        numDmlAffectedRows:
+          type: string
+          format: int64
+          description: The number of rows affected by a DML statement.
+        pageToken:
+          type: string
+          description: A token used for paging results.
+        rows:
+          type: array
+          items:
+            $ref: '#/components/schemas/TableRow'
+        schema:
+          $ref: '#/components/schemas/TableSchema'
+        totalBytesProcessed:
+          type: string
+          format: int64
+          description: The total number of bytes processed for this query.
+        totalRows:
+          type: string
+          format: uint64
+          description: The total number of rows in the complete query result set.
+components:
+  schemas:
+    TableDataInsertAllRequest:
+      type: object
+      properties:
+        ignoreUnknownValues:
+          type: boolean
+          description: Accept rows that contain values that do not match the schema.
+        kind:
+          type: string
+          description: The resource type of the request.
+          default: bigquery#tableDataInsertAllRequest
+        rows:
+          type: array
+          items:
+            $ref: '#/components/schemas/TableDataInsertAllRequestRows'
+        skipInvalidRows:
+          type: boolean
+          description: Insert all valid rows of a request, even if invalid rows exist.
+        templateSuffix:
+          type: string
+          description: If specified, treats the destination table as a base template, and inserts the rows into an instance table named "{destination}{templateSuffix}".
+    TableDataInsertAllRequestRows:
+      type: object
+      properties:
+        insertId:
+          type: string
+          description: A unique ID for each row. BigQuery uses this property to detect duplicate insertion requests on a best-effort basis.
+        json:
+          type: object
+          description: The actual data to insert.
+    TableDataInsertAllResponse:
+      type: object
+      properties:
+        insertErrors:
+          type: array
+          items:
+            $ref: '#/components/schemas/TableDataInsertAllResponseInsertErrors'
+        kind:
+          type: string
+          description: The resource type of the response.
+          default: bigquery#tableDataInsertAllResponse
+    TableDataInsertAllResponseInsertErrors:
+      type: object
+      properties:
+        errors:
+          type: array
+          items:
+            $ref: '#/components/schemas/ErrorProto'
+        index:
+          type: integer
+          description: The index of the row that error applies to.
+    Table:
+      type: object
+      properties:
+        creationTime:
+          type: string
+          format: int64
+          description: The time when this table was created, in milliseconds since the epoch.
+        description:
+          type: string
+          description: [Optional] A user-friendly description of the table.
+        etag:
+          type: string
+          description: A hash of the resource.
+        expirationTime:
+          type: string
+          format: int64
+          description: The time when this table expires, in milliseconds since the epoch.
+        externalDataConfiguration:
+          $ref: '#/components/schemas/ExternalDataConfiguration'
+        friendlyName:
+          type: string
+          description: [Optional] A descriptive name for the table.
+        id:
+          type: string
+          description: The fully-qualified unique name of the table in the format projectId:datasetId:tableId.
+        kind:
+          type: string
+          default: bigquery#table
+          description: The resource type.
+        labels:
+          type: object
+          additionalProperties:
+            type: string
+        lastModifiedTime:
+          type: string
+          format: int64
+          description: The time when this table was last modified, in milliseconds since the epoch.
+        location:
+          type: string
+          description: The geographic location where the table resides.
+        schema:
+          $ref: '#/components/schemas/TableSchema'
+        selfLink:
+          type: string
+          description: A URL that can be used to access the resource again.
+        tableReference:
+          $ref: '#/components/schemas/TableReference'
+        timePartitioning:
+          $ref: '#/components/schemas/TimePartitioning'
+        type:
+          type: string
+          description: The type of the table. Supported values are: TABLE, VIEW.
+components:
+  schemas:
+    ExternalDataConfiguration:
+      type: object
+      properties:
+        autodetect:
+          type: boolean
+          description: Try to detect schema and format options automatically.
+        bigtableOptions:
+          $ref: '#/components/schemas/BigtableOptions'
+        compression:
+          type: string
+          description: The compression type of the data source.
+        csvOptions:
+          $ref: '#/components/schemas/CsvOptions'
+        googleSheetsOptions:
+          $ref: '#/components/schemas/GoogleSheetsOptions'
+        hivePartitioningOptions:
+          $ref: '#/components/schemas/HivePartitioningOptions'
+        ignoreUnknownValues:
+          type: boolean
+          description: Indicates if BigQuery should allow extra values that are not represented in the table schema.
+        maxBadRecords:
+          type: integer
+          description: The maximum number of bad records that BigQuery can ignore when reading data.
+        sourceFormat:
+          type: string
+          description: The format of the data source.
+        sourceUris:
+          type: array
+          items:
+            type: string
+          description: The fully-qualified URIs that point to your data in Google Cloud.
+    BigtableOptions:
+      type: object
+      properties:
+        columnFamilies:
+          type: array
+          items:
+            $ref: '#/components/schemas/BigtableColumnFamily'
+        ignoreUnspecifiedColumnFamilies:
+          type: boolean
+          description: If field is true, then the column families that are not specified in columnFamilies list are not exposed in the table schema.
+        readRowkeyAsString:
+          type: boolean
+          description: If field is true, then the rowkey column families will be read and converted to string.
+    BigtableColumnFamily:
+      type: object
+      properties:
+        columns:
+          type: array
+          items:
+            $ref: '#/components/schemas/BigtableColumn'
+        encoding:
+          type: string
+          description: The encoding of the values when the type is not STRING.
+        familyId:
+          type: string
+          description: Identifier of the column family.
+        onlyReadLatest:
+          type: boolean
+          description: If this is set only the latest version of value are exposed for all columns in this column family.
+        type:
+          type: string
+          description: The type to convert the value in cells of this column family.
+    BigtableColumn:
+      type: object
+      properties:
+        encoding:
+          type: string
+          description: The encoding of the values when the type is not STRING.
+        fieldName:
+          type: string
+          description: If the qualifier is not a valid BigQuery field identifier i.e. does not match a-zA-Z*, a valid identifier must be provided as the column field name and is used as field name in queries.
+        onlyReadLatest:
+          type: boolean
+          description: If this is set, only the latest version of value in this column are exposed.
+        qualifierEncoded:
+          type: string
+          format: byte
+          description: Qualifier of the column.
+        qualifierString:
+          type: string
+          description: Qualifier string.
+        type:
+          type: string
+          description: The type to convert the value in cells of this column.
+    CsvOptions:
+      type: object
+      properties:
+        allowJaggedRows:
+          type: boolean
+          description: Indicates if BigQuery should accept rows that are missing trailing optional columns.
+        allowQuotedNewlines:
+          type: boolean
+          description: Indicates if BigQuery should allow quoted data sections that contain newline characters in a CSV file.
+        encoding:
+          type: string
+          description: The character encoding of the data.
+        fieldDelimiter:
+          type: string
+          description: The separator character for fields in a CSV file.
+        quote:
+          type: string
+          description: The value that is used to quote data sections in a CSV file.
+        skipLeadingRows:
+          type: string
+          format: int64
+          description: The number of rows at the top of a CSV file that BigQuery will skip when reading the data.
+    GoogleSheetsOptions:
+      type: object
+      properties:
+        range:
+          type: string
+          description: [Optional] Range of a sheet to query from.
+        skipLeadingRows:
+          type: string
+          format: int64
+          description: The number of rows at the top of a sheet that BigQuery will skip when reading the data.
+    HivePartitioningOptions:
+      type: object
+      properties:
+        mode:
+          type: string
+          description: When set, what mode of hive partitioning to use when reading data.
+        sourceUriPrefix:
+          type: string
+          description: [Optional] When hive partition detection is requested, a common prefix for all source uris should be supplied.
+    TimePartitioning:
+      type: object
+      properties:
+        expirationMs:
+          type: string
+          format: int64
+          description: Number of milliseconds for which to keep the storage for a partition.
+        field:
+          type: string
+          description: If not set, the table is partitioned by pseudo column _PARTITIONTIME.
+        requirePartitionFilter:
+          type: boolean
+          description: If set to true, queries over this table require a partition filter that can be used for partition elimination to be specified.
+        type:
+          type: string
+          description: The only type supported is DAY, which will generate one partition per day.
