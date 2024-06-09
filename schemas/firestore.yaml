@@ -1,0 +1,176 @@
+openapi: 3.1.0
+info:
+  title: Cloud Firestore API
+  description: Accesses the NoSQL document database built for automatic scaling, high performance, and ease of application development.
+  version: v1
+  termsOfService: https://cloud.google.com/firestore/terms
+  contact:
+    name: Google
+    url: https://cloud.google.com/firestore
+servers:
+  - url: https://firestore.googleapis.com/
+    description: Firestore API server
+paths:
+  /v1/{name}/locations:
+    get:
+      operationId: listLocations
+      summary: Lists information about the supported locations for this service.
+      parameters:
+        - name: name
+          in: path
+          required: true
+          schema:
+            type: string
+          description: The resource that owns the locations collection, if applicable.
+        - name: filter
+          in: query
+          schema:
+            type: string
+          description: A filter to narrow down results to a preferred subset.
+        - name: pageSize
+          in: query
+          schema:
+            type: integer
+            format: int32
+          description: The maximum number of results to return. If not set, the service selects a default.
+        - name: pageToken
+          in: query
+          schema:
+            type: string
+          description: A page token received from the nextPageToken field in the response.
+      responses:
+        '200':
+          description: A list of locations.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ListLocationsResponse'
+      security:
+        - oauth2:
+            - https://www.googleapis.com/auth/cloud-platform
+            - https://www.googleapis.com/auth/datastore
+  /v1/{name}/locations/{locationId}:
+    get:
+      operationId: getLocation
+      summary: Gets information about a location.
+      parameters:
+        - name: name
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Resource name for the location.
+      responses:
+        '200':
+          description: A location object.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Location'
+      security:
+        - oauth2:
+            - https://www.googleapis.com/auth/cloud-platform
+            - https://www.googleapis.com/auth/datastore
+components:
+  schemas:
+    ListLocationsResponse:
+      type: object
+      description: The response message for Locations.ListLocations.
+      properties:
+        locations:
+          type: array
+          items:
+            $ref: '#/components/schemas/Location'
+          description: A list of locations that matches the specified filter in the request.
+        nextPageToken:
+          type: string
+          description: The standard List next-page token.
+    Location:
+      type: object
+      description: A resource that represents a Google Cloud location.
+      properties:
+        name:
+          type: string
+          description: Resource name for the location, which may vary between implementations. For example: "projects/example-project/locations/us-east1".
+        locationId:
+          type: string
+          description: The canonical id for this location. For example: "us-east1".
+        displayName:
+          type: string
+          description: The friendly name for this location, typically a nearby city name. For example, "Tokyo".
+        labels:
+          type: object
+          additionalProperties:
+            type: string
+          description: Cross-service attributes for the location. For example {"cloud.googleapis.com/region": "us-east1"}.
+        metadata:
+          type: object
+          additionalProperties:
+            type: string
+            description: Properties of the object. Contains field @type with type URL.
+          description: Service-specific metadata. For example the available capacity at the given location.
+    GoogleLongrunningListOperationsResponse:
+      type: object
+      description: The response message for Operations.ListOperations.
+      properties:
+        operations:
+          type: array
+          items:
+            $ref: '#/components/schemas/GoogleLongrunningOperation'
+          description: A list of operations that matches the specified filter in the request.
+        nextPageToken:
+          type: string
+          description: The standard List next-page token.
+    GoogleLongrunningOperation:
+      type: object
+      description: This resource represents a long-running operation that is the result of a network API call.
+      properties:
+        name:
+          type: string
+          description: The server-assigned name, which is only unique within the same service that originally returns it.
+        metadata:
+          type: object
+          additionalProperties:
+            type: string
+            description: Properties of the object. Contains field @type with type URL.
+          description: Service-specific metadata associated with the operation.
+        done:
+          type: boolean
+          description: If the value is false, it means the operation is still in progress. If true, the operation is completed, and either error or response is available.
+        error:
+          $ref: '#/components/schemas/Status'
+          description: The error result of the operation in case of failure or cancellation.
+        response:
+          type: object
+          additionalProperties:
+            type: string
+            description: Properties of the object. Contains field @type with type URL.
+          description: The normal, successful response of the operation. If the original method returns no data on success, such as Delete, the response is google.protobuf.Empty.
+    Status:
+      type: object
+      description: The Status type defines a logical error model that is suitable for different programming environments, including REST APIs and RPC APIs.
+      properties:
+        code:
+          type: integer
+          format: int32
+          description: The status code, which should be an enum value of google.rpc.Code.
+        message:
+          type: string
+          description: A developer-facing error message, which should be in English.
+        details:
+          type: array
+          items:
+            type: object
+            additionalProperties:
+              type: string
+              description: Properties of the object. Contains field @type with type URL.
+          description: A list of messages that carry the error details.
+securitySchemes:
+  oauth2:
+    type: oauth2
+    flows:
+      implicit:
+        authorizationUrl: https://accounts.google.com/o/oauth2/auth
+        scopes:
+          https://www.googleapis.com/auth/cloud-platform: View and manage your data across Google Cloud Platform services
+          https://www.googleapis.com/auth/datastore: View and manage your Google Cloud Datastore data
